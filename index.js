@@ -25,23 +25,20 @@ function pemEncode(str, n) {
   return returnString;
 }
 
-function getOptions(url) {
+function getOptions() {
   return {
-    hostname: url,
     agent: false,
     rejectUnauthorized: false,
     ciphers: 'ALL'
   };
 }
 
-function validateUrl(url) {
-  if (url.length <= 0 || typeof url !== 'string') {
-    throw Error('A valid URL is required');
-  }
-}
-
-function handleRequest(options, resolve, reject) {
-  return https.get(options, function(res) {
+function handleRequest(url, options, resolve, reject) {
+	if ( typeof url !== 'URL' ) url = new URL(url)
+	options.hostname = url.hostname
+	options.port = url.port
+	options.path = url.path
+  return https.get(options, res => {
     var certificate = res.socket.getPeerCertificate();
 
     if (isEmpty(certificate) || certificate === null) {
@@ -56,12 +53,10 @@ function handleRequest(options, resolve, reject) {
 }
 
 function get(url, timeout) {
-  validateUrl(url);
-
-  var options = getOptions(url);
+  var options = getOptions();
 
   return new Promise(function(resolve, reject) {
-    var req = handleRequest(options, resolve, reject);
+    var req = handleRequest(url, options, resolve, reject);
 
     if (timeout) {
       req.setTimeout(timeout, function() {
